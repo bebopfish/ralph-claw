@@ -56,6 +56,12 @@ router.post('/stories', async (req: Request, res: Response) => {
   const project = await getProject(res);
   if (!project) return;
   try {
+    // Auto-create prd.json if it doesn't exist yet (e.g. when importing from brainstorm)
+    const existing = await readPrd(project);
+    if (!existing) {
+      const projectName = project.split(/[/\\]/).pop() ?? 'my-project';
+      await createPrd(project, projectName);
+    }
     const story = await addStory(project, req.body as Omit<Story, 'id' | 'status' | 'completedAt' | 'commitHash'>);
     res.json(story);
   } catch (e) {

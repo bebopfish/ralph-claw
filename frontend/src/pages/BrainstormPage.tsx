@@ -7,8 +7,17 @@ interface MessageWithStories extends ChatMessage {
   stories?: StoryDraft[];
 }
 
+const STORAGE_KEY = 'brainstorm-messages';
+
 export default function BrainstormPage() {
-  const [messages, setMessages] = useState<MessageWithStories[]>([]);
+  const [messages, setMessages] = useState<MessageWithStories[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? (JSON.parse(saved) as MessageWithStories[]) : [];
+    } catch (_e) {
+      return [];
+    }
+  });
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedStories, setSelectedStories] = useState<Set<string>>(new Set());
@@ -18,6 +27,11 @@ export default function BrainstormPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const currentProject = useAppStore((s) => s.currentProject);
   const fetchPrd = useAppStore((s) => s.fetchPrd);
+
+  // Persist messages to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+  }, [messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -159,29 +173,66 @@ export default function BrainstormPage() {
           padding: '16px 24px 12px',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
           flexShrink: 0,
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
         }}
       >
-        <h2
-          style={{
-            margin: 0,
-            fontSize: '16px',
-            fontWeight: 600,
-            color: '#fff',
-            letterSpacing: '-0.3px',
-          }}
-        >
-          头脑风暴
-        </h2>
-        <p
-          style={{
-            margin: '4px 0 0',
-            fontSize: '12px',
-            color: 'rgba(255,255,255,0.4)',
-            letterSpacing: '-0.1px',
-          }}
-        >
-          描述你的产品或功能，AI 帮你分解 Story，确认后一键添加到 PRD
-        </p>
+        <div>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: '16px',
+              fontWeight: 600,
+              color: '#fff',
+              letterSpacing: '-0.3px',
+            }}
+          >
+            头脑风暴
+          </h2>
+          <p
+            style={{
+              margin: '4px 0 0',
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.4)',
+              letterSpacing: '-0.1px',
+            }}
+          >
+            描述你的产品或功能，AI 帮你分解 Story，确认后一键添加到 PRD
+          </p>
+        </div>
+        {messages.length > 0 && (
+          <button
+            onClick={() => {
+              setMessages([]);
+              setSelectedStories(new Set());
+              setAddResult(null);
+              localStorage.removeItem(STORAGE_KEY);
+            }}
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: '6px',
+              padding: '4px 10px',
+              color: 'rgba(255,255,255,0.4)',
+              fontSize: '11px',
+              cursor: 'pointer',
+              letterSpacing: '-0.1px',
+              flexShrink: 0,
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'rgba(255,255,255,0.8)';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'rgba(255,255,255,0.4)';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+            }}
+          >
+            清空对话
+          </button>
+        )}
       </div>
 
       {/* Messages area */}

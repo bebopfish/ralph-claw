@@ -103,7 +103,7 @@ async function runStory(projectPath: string, story: Story): Promise<boolean> {
   const prompt = buildPrompt(story, progress);
 
   // Determine claude command (cross-platform)
-  const claudeCmd = process.platform === 'win32' ? 'claude.cmd' : 'claude';
+  const claudeCmd = 'claude';
 
   return new Promise((resolve) => {
     const proc = spawn(claudeCmd, ['--dangerously-skip-permissions', '-p', prompt], {
