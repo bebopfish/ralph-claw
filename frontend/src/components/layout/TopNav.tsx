@@ -5,6 +5,7 @@ import ProjectPicker from '../project/ProjectPicker';
 
 const navItems = [
   { to: '/dashboard', label: '仪表盘' },
+  { to: '/brainstorm', label: '头脑风暴' },
   { to: '/prd', label: 'PRD' },
   { to: '/progress', label: '进度' },
   { to: '/git', label: 'Git' },

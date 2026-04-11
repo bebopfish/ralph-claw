@@ -5,6 +5,7 @@ import DashboardPage from './pages/DashboardPage';
 import PrdPage from './pages/PrdPage';
 import ProgressPage from './pages/ProgressPage';
 import GitPage from './pages/GitPage';
+import BrainstormPage from './pages/BrainstormPage';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useAppStore } from './store/appStore';
 import { apiProjects } from './api/projects';
@@ -31,6 +32,7 @@ function AppInner() {
         <Route path="/prd" element={<PrdPage />} />
         <Route path="/progress" element={<ProgressPage />} />
         <Route path="/git" element={<GitPage />} />
+        <Route path="/brainstorm" element={<BrainstormPage />} />
       </Routes>
     </AppLayout>
   );

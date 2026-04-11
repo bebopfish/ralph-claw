@@ -7,6 +7,7 @@ import prdRouter from './routes/prd';
 import progressRouter from './routes/progress';
 import gitRouter from './routes/git';
 import ralphRouter from './routes/ralph';
+import brainstormRouter from './routes/brainstorm';
 import { setupWsHandler } from './ws/wsHandler';
 
 const app = express();
@@ -21,6 +22,7 @@ app.use('/api/prd', prdRouter);
 app.use('/api/progress', progressRouter);
 app.use('/api/git', gitRouter);
 app.use('/api/ralph', ralphRouter);
+app.use('/api/brainstorm', brainstormRouter);
 
 setupWsHandler(wss);
 

@@ -6,6 +6,7 @@ Ralph 通过反复调用 Claude Code CLI，自动逐条实现 PRD（产品需求
 
 ## 功能特性
 
+- **头脑风暴** — 与 AI 对话讨论需求，自动分解 Story，一键添加到 PRD
 - **可视化 PRD 管理** — 拖拽看板创建、编辑、排序 Story
 - **一键启动** — 点击按钮启动 Ralph 自动循环
 - **实时日志流** — WebSocket 实时展示 Claude 运行输出
@@ -37,6 +38,14 @@ npm run dev
 浏览器打开 **http://localhost:5173**
 
 ## 使用方法
+
+### 0. 头脑风暴（可选）
+
+进入 **头脑风暴** 页面，与 AI 自由讨论产品需求：
+
+1. 描述你的产品或功能（例如："我想做一个团队任务协作工具，支持任务分配和进度跟踪"）
+2. AI 会提问澄清需求细节，帮你拆分成合理的 Story 粒度
+3. 确认 Story 列表后，勾选想要的条目，点击 **"添加到 PRD"** 一键导入
 
 ### 1. 选择项目目录
 
@@ -88,6 +97,7 @@ Ralph 对每个待处理 Story 执行以下循环：
 | PRD 管理 | 各 Story 完成状态和 commit hash |
 | 进度记录 | Ralph 积累的项目约束和模式 |
 | Git 历史 | 所有自动提交记录 |
+| 头脑风暴 | 与 AI 讨论需求，生成并导入 Story |
 
 ## 项目结构
 
@@ -105,7 +115,7 @@ ralph-claude/
 │       └── routes/                 # REST API 路由
 └── frontend/                       # React + Vite
     └── src/
-        ├── pages/                  # 四个主页面
+        ├── pages/                  # 五个主页面（含头脑风暴）
         ├── components/             # UI 组件
         ├── store/appStore.ts       # Zustand 全局状态
         ├── hooks/useWebSocket.ts   # WS 连接管理
@@ -157,6 +167,7 @@ Story `status` 可选值：`pending` | `in-progress` | `completed` | `failed`
 
 **Q: 如何在 Windows 上使用？**
 Ralph Claude 原生支持 Windows，后端会自动使用 `claude.cmd` 启动 Claude Code CLI。
+
 
 ## 致谢
 
