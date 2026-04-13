@@ -243,11 +243,14 @@ router.post('/chat', async (req: Request, res: Response) => {
 
   try {
     const rawContent = await new Promise<string>((resolve, reject) => {
-      const proc = spawn('claude', ['--dangerously-skip-permissions', '-p', prompt], {
+      // Pass prompt via stdin instead of -p arg to avoid Windows CMD 8191-char line length limit
+      const proc = spawn('claude', ['--dangerously-skip-permissions', '-p'], {
         cwd: tmpdir(),
         shell: process.platform === 'win32',
         env: process.env,
       });
+      proc.stdin?.write(prompt, 'utf-8');
+      proc.stdin?.end();
 
       let stdout = '';
       let stderr = '';
