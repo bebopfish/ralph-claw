@@ -67,6 +67,29 @@ router.delete('/recent', async (req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
+router.get('/drives', async (_req: Request, res: Response) => {
+  if (process.platform !== 'win32') {
+    res.json({ drives: ['/'] });
+    return;
+  }
+  try {
+    const drives = await new Promise<string[]>((resolve, reject) => {
+      exec('wmic logicaldisk get name', (err, stdout) => {
+        if (err) { reject(err); return; }
+        const list = stdout
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => /^[A-Za-z]:$/.test(line))
+          .map((d) => d + '\\');
+        resolve(list.length > 0 ? list : ['C:\\']);
+      });
+    });
+    res.json({ drives });
+  } catch {
+    res.json({ drives: ['C:\\'] });
+  }
+});
+
 router.post('/browse', async (req: Request, res: Response) => {
   const { path: dirPath } = req.body as { path?: string };
   const targetPath = dirPath || os.homedir();

@@ -36,4 +36,9 @@ export const apiProjects = {
     const { data } = await client.post<{ path: string }>('/projects/mkdir', { path: parentPath, name });
     return data;
   },
+
+  getDrives: async () => {
+    const { data } = await client.get<{ drives: string[] }>('/projects/drives');
+    return data;
+  },
 };

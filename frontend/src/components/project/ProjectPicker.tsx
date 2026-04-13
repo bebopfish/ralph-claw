@@ -18,7 +18,12 @@ export default function ProjectPicker({ onClose }: Props) {
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [mkdirError, setMkdirError] = useState('');
+  const [drives, setDrives] = useState<string[]>([]);
+  const [showDrives, setShowDrives] = useState(false);
   const newFolderInputRef = useRef<HTMLInputElement>(null);
+
+  // True when browsePath is a drive root like "C:\" or Unix root "/"
+  const isAtRoot = (p: string) => p === '/' || /^[A-Za-z]:\\?$/.test(p);
 
   const { setCurrentProject, fetchPrd } = useAppStore.getState();
 
@@ -32,6 +37,7 @@ export default function ProjectPicker({ onClose }: Props) {
     }).catch(() => {
       setBrowseError('无法读取默认目录');
     });
+    apiProjects.getDrives().then(({ drives: d }) => setDrives(d));
   }, []);
 
   useEffect(() => {
@@ -47,6 +53,7 @@ export default function ProjectPicker({ onClose }: Props) {
 
   const browse = async (path?: string) => {
     setBrowseError('');
+    setShowDrives(false);
     try {
       const result = await apiProjects.browse(path);
       setBrowsePath(result.path);
@@ -311,57 +318,77 @@ export default function ProjectPicker({ onClose }: Props) {
               >
                 <button
                   onClick={() => {
-                    const parent = browsePath.replace(/[/\\][^/\\]+$/, '');
+                    if (showDrives) return;
+                    if (isAtRoot(browsePath) && drives.length > 1) {
+                      setShowDrives(true);
+                      return;
+                    }
+                    let parent = browsePath.replace(/[/\\][^/\\]+$/, '');
+                    // Normalize bare drive letter "C:" → "C:\" so it's browsable
+                    if (/^[A-Za-z]:$/.test(parent)) parent = parent + '\\';
                     if (parent && parent !== browsePath) browse(parent);
                   }}
                   style={{
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    color: 'rgba(255,255,255,0.4)', fontSize: '14px', padding: '0 4px',
+                    background: 'none', border: 'none',
+                    cursor: showDrives ? 'default' : 'pointer',
+                    color: showDrives ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)',
+                    fontSize: '14px', padding: '0 4px',
                     flexShrink: 0, transition: 'color 0.15s',
                   }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)'; }}
-                  title="上一级"
+                  onMouseEnter={(e) => { if (!showDrives) (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = showDrives ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.4)'; }}
+                  title={showDrives ? undefined : '上一级'}
                 >
                   ←
                 </button>
-                <input
-                  type="text"
-                  value={pathInput}
-                  onChange={(e) => { setPathInput(e.target.value); setBrowseError(''); }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') browse(pathInput);
-                    if (e.key === 'Escape') setPathInput(browsePath);
-                  }}
-                  onBlur={() => setPathInput(browsePath)}
-                  style={{
-                    flex: 1, background: 'none', border: 'none', outline: 'none',
-                    fontSize: '11px', color: 'rgba(255,255,255,0.5)',
-                    letterSpacing: '-0.12px', fontFamily: 'monospace',
-                    padding: '4px 2px', minWidth: 0,
-                  }}
-                  onFocus={(e) => {
-                    (e.currentTarget as HTMLInputElement).style.color = '#fff';
-                    (e.currentTarget as HTMLInputElement).select();
-                  }}
-                  title="输入路径后按 Enter 跳转"
-                />
-                <button
-                  onClick={() => browsePathIsGit ? selectProject(browsePath) : undefined}
-                  disabled={loading || !browsePathIsGit}
-                  title={browsePathIsGit ? undefined : '非 Git 仓库'}
-                  style={{
-                    flexShrink: 0, padding: '3px 10px',
-                    background: browsePathIsGit ? '#0071e3' : 'rgba(255,255,255,0.1)',
-                    border: 'none', borderRadius: '980px', color: '#fff',
-                    fontSize: '11px', fontFamily: 'var(--font-text)',
-                    cursor: (loading || !browsePathIsGit) ? 'not-allowed' : 'pointer',
-                    opacity: loading ? 0.5 : 1,
-                    letterSpacing: '-0.12px',
-                  }}
-                >
-                  选择此目录
-                </button>
+                {showDrives ? (
+                  <span style={{
+                    flex: 1, fontSize: '11px', color: 'rgba(255,255,255,0.4)',
+                    letterSpacing: '-0.12px', fontFamily: 'monospace', padding: '4px 2px',
+                  }}>
+                    计算机
+                  </span>
+                ) : (
+                  <input
+                    type="text"
+                    value={pathInput}
+                    onChange={(e) => { setPathInput(e.target.value); setBrowseError(''); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') browse(pathInput);
+                      if (e.key === 'Escape') setPathInput(browsePath);
+                    }}
+                    onBlur={() => setPathInput(browsePath)}
+                    style={{
+                      flex: 1, background: 'none', border: 'none', outline: 'none',
+                      fontSize: '11px', color: 'rgba(255,255,255,0.5)',
+                      letterSpacing: '-0.12px', fontFamily: 'monospace',
+                      padding: '4px 2px', minWidth: 0,
+                    }}
+                    onFocus={(e) => {
+                      (e.currentTarget as HTMLInputElement).style.color = '#fff';
+                      (e.currentTarget as HTMLInputElement).select();
+                    }}
+                    title="输入路径后按 Enter 跳转"
+                  />
+                )}
+                {!showDrives && (
+                  <button
+                    onClick={() => browsePathIsGit ? selectProject(browsePath) : undefined}
+                    disabled={loading || !browsePathIsGit}
+                    title={browsePathIsGit ? undefined : '非 Git 仓库'}
+                    style={{
+                      flexShrink: 0, padding: '3px 10px',
+                      background: browsePathIsGit ? '#0071e3' : 'rgba(255,255,255,0.1)',
+                      border: 'none', borderRadius: '980px', color: '#fff',
+                      fontSize: '11px', fontFamily: 'var(--font-text)',
+                      cursor: (loading || !browsePathIsGit) ? 'not-allowed' : 'pointer',
+                      opacity: loading ? 0.5 : 1,
+                      letterSpacing: '-0.12px',
+                    }}
+                  >
+                    选择此目录
+                  </button>
+                )}
               </div>
 
               {browseError && (
@@ -370,60 +397,82 @@ export default function ProjectPicker({ onClose }: Props) {
                 </p>
               )}
 
-              {dirs.map((d) => (
-                <div
-                  key={d.path}
-                  style={{ display: 'flex', alignItems: 'center' }}
-                >
+              {showDrives ? (
+                drives.map((drive) => (
                   <button
-                    onClick={() => browse(d.path)}
+                    key={drive}
+                    onClick={() => { setShowDrives(false); browse(drive); }}
                     style={{
-                      flex: 1, textAlign: 'left', background: 'none', border: 'none',
+                      display: 'block', width: '100%', textAlign: 'left',
+                      background: 'none', border: 'none',
                       padding: '8px 12px', color: 'rgba(255,255,255,0.72)',
                       fontSize: '13px', fontFamily: 'var(--font-text)', letterSpacing: '-0.12px',
-                      cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      transition: 'background 0.15s',
+                      cursor: 'pointer', transition: 'background 0.15s',
                     }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'none'; }}
                   >
-                    📁 {d.name}
-                    {d.isGitRepo && (
-                      <span style={{
-                        marginLeft: '6px', fontSize: '10px',
-                        color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace',
-                        verticalAlign: 'middle',
-                      }}>git</span>
-                    )}
+                    💾 {drive}
                   </button>
-                  <button
-                    onClick={() => d.isGitRepo ? selectProject(d.path) : undefined}
-                    disabled={!d.isGitRepo}
-                    title={d.isGitRepo ? undefined : '非 Git 仓库'}
-                    style={{
-                      background: 'none', border: 'none', padding: '8px 12px',
-                      color: d.isGitRepo ? '#2997ff' : 'rgba(255,255,255,0.2)',
-                      fontSize: '12px', fontFamily: 'var(--font-text)',
-                      letterSpacing: '-0.12px',
-                      cursor: d.isGitRepo ? 'pointer' : 'not-allowed',
-                      flexShrink: 0, transition: 'opacity 0.15s',
-                    }}
-                    onMouseEnter={(e) => { if (d.isGitRepo) (e.currentTarget as HTMLButtonElement).style.opacity = '0.7'; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
-                  >
-                    选择
-                  </button>
-                </div>
-              ))}
-              {dirs.length === 0 && !browseError && (
-                <p
-                  style={{
-                    padding: '10px 12px', fontSize: '12px',
-                    color: 'rgba(255,255,255,0.24)', letterSpacing: '-0.12px',
-                  }}
-                >
-                  无子目录
-                </p>
+                ))
+              ) : (
+                <>
+                  {dirs.map((d) => (
+                    <div
+                      key={d.path}
+                      style={{ display: 'flex', alignItems: 'center' }}
+                    >
+                      <button
+                        onClick={() => browse(d.path)}
+                        style={{
+                          flex: 1, textAlign: 'left', background: 'none', border: 'none',
+                          padding: '8px 12px', color: 'rgba(255,255,255,0.72)',
+                          fontSize: '13px', fontFamily: 'var(--font-text)', letterSpacing: '-0.12px',
+                          cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'none'; }}
+                      >
+                        📁 {d.name}
+                        {d.isGitRepo && (
+                          <span style={{
+                            marginLeft: '6px', fontSize: '10px',
+                            color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace',
+                            verticalAlign: 'middle',
+                          }}>git</span>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => d.isGitRepo ? selectProject(d.path) : undefined}
+                        disabled={!d.isGitRepo}
+                        title={d.isGitRepo ? undefined : '非 Git 仓库'}
+                        style={{
+                          background: 'none', border: 'none', padding: '8px 12px',
+                          color: d.isGitRepo ? '#2997ff' : 'rgba(255,255,255,0.2)',
+                          fontSize: '12px', fontFamily: 'var(--font-text)',
+                          letterSpacing: '-0.12px',
+                          cursor: d.isGitRepo ? 'pointer' : 'not-allowed',
+                          flexShrink: 0, transition: 'opacity 0.15s',
+                        }}
+                        onMouseEnter={(e) => { if (d.isGitRepo) (e.currentTarget as HTMLButtonElement).style.opacity = '0.7'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+                      >
+                        选择
+                      </button>
+                    </div>
+                  ))}
+                  {dirs.length === 0 && !browseError && (
+                    <p
+                      style={{
+                        padding: '10px 12px', fontSize: '12px',
+                        color: 'rgba(255,255,255,0.24)', letterSpacing: '-0.12px',
+                      }}
+                    >
+                      无子目录
+                    </p>
+                  )}
+                </>
               )}
             </div>
             {selectError && (
