@@ -118,11 +118,14 @@ async function runStory(projectPath: string, story: Story): Promise<boolean> {
   const claudeCmd = 'claude';
 
   return new Promise((resolve) => {
-    const proc = spawn(claudeCmd, ['--dangerously-skip-permissions', '-p', prompt], {
+    // Pass prompt via stdin to avoid Windows CMD 8191-char line length limit
+    const proc = spawn(claudeCmd, ['--dangerously-skip-permissions', '-p'], {
       cwd: projectPath,
       shell: process.platform === 'win32',
       env: process.env,
     });
+    proc.stdin?.write(prompt, 'utf-8');
+    proc.stdin?.end();
 
     state.process = proc;
 
