@@ -24,8 +24,8 @@ export default function StoryEditor({ initial, onSave, onCancel }: Props) {
   const [priority, setPriority] = useState(initial?.priority ?? 1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const needsReset = initial?.status === 'completed' || initial?.status === 'in_progress';
-  const [resetStatus, setResetStatus] = useState(needsReset);
+  const needsReset = initial?.status === 'completed' || initial?.status === 'in-progress' || initial?.status === 'failed';
+  const [resetStatus, setResetStatus] = useState(initial?.status === 'failed' ? true : needsReset);
 
   const addCriterion = () => setCriteria([...criteria, '']);
   const removeCriterion = (i: number) => setCriteria(criteria.filter((_, idx) => idx !== i));
@@ -167,7 +167,7 @@ export default function StoryEditor({ initial, onSave, onCancel }: Props) {
             style={{ width: '14px', height: '14px', cursor: 'pointer', accentColor: '#ff9f0a' }}
           />
           <span style={{ fontSize: '13px', color: resetStatus ? '#ff9f0a' : 'rgba(255,255,255,0.4)', letterSpacing: '-0.12px' }}>
-            重置为待处理，让 Ralph 重新实现
+            {initial?.status === 'failed' ? '重置为待处理，让 Ralph 重新尝试' : '重置为待处理，让 Ralph 重新实现'}
           </span>
         </label>
       )}
