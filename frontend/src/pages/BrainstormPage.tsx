@@ -18,6 +18,7 @@ interface Attachment {
 }
 
 const STORAGE_KEY_PREFIX = 'brainstorm-messages';
+const STORAGE_KEY_ADDED = 'brainstorm-added-stories';
 
 export default function BrainstormPage() {
   const [messages, setMessages] = useState<MessageWithStories[]>([]);
@@ -40,15 +41,21 @@ export default function BrainstormPage() {
   const prd = useAppStore((s) => s.prd);
   const existingStories = prd?.stories ?? [];
 
-  // Load messages when project changes
+  // Load messages and addedStories when project changes
   useEffect(() => {
     isRestoringRef.current = true;
-    if (!currentProject) { setMessages([]); return; }
+    if (!currentProject) { setMessages([]); setAddedStories(new Set()); return; }
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}:${currentProject}`);
       setMessages(saved ? (JSON.parse(saved) as MessageWithStories[]) : []);
     } catch {
       setMessages([]);
+    }
+    try {
+      const savedAdded = localStorage.getItem(`${STORAGE_KEY_ADDED}:${currentProject}`);
+      setAddedStories(savedAdded ? new Set(JSON.parse(savedAdded) as string[]) : new Set());
+    } catch {
+      setAddedStories(new Set());
     }
   }, [currentProject]);
 
@@ -62,6 +69,12 @@ export default function BrainstormPage() {
     if (!currentProject) return;
     localStorage.setItem(`${STORAGE_KEY_PREFIX}:${currentProject}`, JSON.stringify(messages));
   }, [messages, currentProject]);
+
+  // Persist addedStories to localStorage whenever it changes
+  useEffect(() => {
+    if (!currentProject) return;
+    localStorage.setItem(`${STORAGE_KEY_ADDED}:${currentProject}`, JSON.stringify([...addedStories]));
+  }, [addedStories, currentProject]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -352,7 +365,10 @@ export default function BrainstormPage() {
               setSelectedStories(new Set());
               setAddedStories(new Set());
               setAddResult(null);
-              if (currentProject) localStorage.removeItem(`${STORAGE_KEY_PREFIX}:${currentProject}`);
+              if (currentProject) {
+                localStorage.removeItem(`${STORAGE_KEY_PREFIX}:${currentProject}`);
+                localStorage.removeItem(`${STORAGE_KEY_ADDED}:${currentProject}`);
+              }
             }}
             style={{
               background: 'transparent',
