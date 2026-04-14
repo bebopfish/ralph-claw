@@ -6,6 +6,8 @@ A more accessible [Ralph](https://github.com/snarktank/ralph) — a web-based AI
 
 Ralph repeatedly calls the Claude Code CLI to automatically implement each Story in your PRD (Product Requirements Document), one by one, until all are complete.
 
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-green) ![React](https://img.shields.io/badge/React-18-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+
 ## Features
 
 - **Brainstorm** — Chat with AI to break down requirements into Stories, then add them to your PRD in one click
@@ -27,8 +29,8 @@ Ralph repeatedly calls the Claude Code CLI to automatically implement each Story
 
 ```bash
 # Clone the repo
-git clone <repo-url>
-cd ralph-claude
+git clone https://github.com/bebopfish/ralph-claw.git
+cd ralph-claw
 
 # Install all dependencies (frontend + backend in one step)
 npm install
@@ -38,6 +40,16 @@ npm run dev
 ```
 
 Open **http://localhost:5173** in your browser.
+
+### Production Deployment
+
+```bash
+# Build frontend + backend
+npm run build
+
+# Start production server
+npm run start
+```
 
 ## Usage
 
@@ -168,7 +180,10 @@ Make sure the `claude` command works in your terminal and that the target projec
 The error is recorded in `progress.txt`. You can update the Story description, manually reset its status to `pending`, and restart Ralph.
 
 **Q: How do I use this on Windows?**
-Ralph Claude natively supports Windows — the backend automatically uses `claude.cmd` to launch the Claude Code CLI.
+Ralph Claw natively supports Windows — the backend automatically uses `claude.cmd` to launch the Claude Code CLI.
+
+**Q: How do I limit how many Stories run per session?**
+Set a number in the "Max Stories" field on the Dashboard. Leave it empty to process all pending Stories.
 
 ## Credits
 

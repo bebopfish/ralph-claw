@@ -6,6 +6,8 @@
 
 Ralph 通过反复调用 Claude Code CLI，自动逐条实现 PRD（产品需求文档）中的 Story，直到全部完成。
 
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-green) ![React](https://img.shields.io/badge/React-18-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+
 ## 功能特性
 
 - **头脑风暴** — 与 AI 对话讨论需求，自动分解 Story，一键添加到 PRD
@@ -27,8 +29,8 @@ Ralph 通过反复调用 Claude Code CLI，自动逐条实现 PRD（产品需求
 
 ```bash
 # 克隆仓库
-git clone <repo-url>
-cd ralph-claude
+git clone https://github.com/bebopfish/ralph-claw.git
+cd ralph-claw
 
 # 安装所有依赖（前后端一次性安装）
 npm install
@@ -38,6 +40,16 @@ npm run dev
 ```
 
 浏览器打开 **http://localhost:5173**
+
+### 生产部署
+
+```bash
+# 构建前后端
+npm run build
+
+# 启动生产服务
+npm run start
+```
 
 ## 使用方法
 
@@ -113,7 +125,7 @@ ralph-claude/
 │       │   ├── prdService.ts       # prd.json 读写
 │       │   ├── progressService.ts  # progress.txt 读写
 │       │   ├── gitService.ts       # git log / commit
-│       │   └── configService.ts   # 最近项目记录
+│       │   └── configService.ts    # 最近项目记录
 │       └── routes/                 # REST API 路由
 └── frontend/                       # React + Vite
     └── src/
@@ -170,6 +182,8 @@ Story `status` 可选值：`pending` | `in-progress` | `completed` | `failed`
 **Q: 如何在 Windows 上使用？**
 Ralph Claude 原生支持 Windows，后端会自动使用 `claude.cmd` 启动 Claude Code CLI。
 
+**Q: 如何限制每次运行的 Story 数量？**
+在仪表盘页面的"最多执行 Story 数"输入框中设置数量，留空则运行所有待处理 Story。
 
 ## 致谢
 
