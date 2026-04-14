@@ -24,6 +24,7 @@ export default function BrainstormPage() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedStories, setSelectedStories] = useState<Set<string>>(new Set());
+  const [addedStories, setAddedStories] = useState<Set<string>>(new Set());
   const [addingToPrd, setAddingToPrd] = useState(false);
   const [addResult, setAddResult] = useState<string | null>(null);
   const [prdExpanded, setPrdExpanded] = useState(true);
@@ -210,8 +211,9 @@ export default function BrainstormPage() {
     let updatedCount = 0;
     let resetCount = 0;
     const errors: string[] = [];
+    const successKeys: string[] = [];
 
-    for (const { story } of toProcess) {
+    for (const { story, key } of toProcess) {
       try {
         if (story.storyId) {
           const existing = existingStories.find((s: Story) => s.id === story.storyId);
@@ -229,6 +231,7 @@ export default function BrainstormPage() {
           });
           updatedCount++;
           if (shouldReset) resetCount++;
+          successKeys.push(key);
         } else {
           await apiPrd.addStory({
             title: story.title,
@@ -237,6 +240,7 @@ export default function BrainstormPage() {
             priority: 0,
           });
           addedCount++;
+          successKeys.push(key);
         }
       } catch (e) {
         errors.push(story.title);
@@ -246,6 +250,11 @@ export default function BrainstormPage() {
     await fetchPrd();
     setAddingToPrd(false);
     setSelectedStories(new Set());
+    setAddedStories((prev) => {
+      const next = new Set(prev);
+      successKeys.forEach((k) => next.add(k));
+      return next;
+    });
 
     const parts: string[] = [];
     if (addedCount > 0) parts.push(`新增 ${addedCount} 个`);
@@ -341,6 +350,7 @@ export default function BrainstormPage() {
             onClick={() => {
               setMessages([]);
               setSelectedStories(new Set());
+              setAddedStories(new Set());
               setAddResult(null);
               if (currentProject) localStorage.removeItem(`${STORAGE_KEY_PREFIX}:${currentProject}`);
             }}
@@ -596,20 +606,26 @@ export default function BrainstormPage() {
                 {msg.stories.map((story, sIdx) => {
                   const key = `${idx}-${sIdx}`;
                   const isSelected = selectedStories.has(key);
+                  const isAdded = addedStories.has(key);
                   return (
                     <div
                       key={key}
-                      onClick={() => toggleStory(key)}
+                      onClick={() => !isAdded && toggleStory(key)}
                       style={{
-                        border: isSelected
+                        border: isAdded
+                          ? '1px solid rgba(48,209,88,0.4)'
+                          : isSelected
                           ? story.storyId ? '1px solid rgba(255,159,10,0.7)' : '1px solid rgba(26,108,245,0.7)'
                           : '1px solid rgba(255,255,255,0.1)',
                         borderRadius: '10px',
                         padding: '12px 14px',
-                        background: isSelected
+                        background: isAdded
+                          ? 'rgba(48,209,88,0.06)'
+                          : isSelected
                           ? story.storyId ? 'rgba(255,159,10,0.08)' : 'rgba(26,108,245,0.12)'
                           : 'rgba(255,255,255,0.04)',
-                        cursor: 'pointer',
+                        cursor: isAdded ? 'default' : 'pointer',
+                        opacity: isAdded ? 0.65 : 1,
                         transition: 'all 0.15s',
                         maxWidth: '640px',
                       }}
@@ -627,8 +643,8 @@ export default function BrainstormPage() {
                             width: '16px',
                             height: '16px',
                             borderRadius: '4px',
-                            border: isSelected ? '2px solid #1a6cf5' : '2px solid rgba(255,255,255,0.25)',
-                            background: isSelected ? '#1a6cf5' : 'transparent',
+                            border: isAdded ? '2px solid #30d158' : isSelected ? '2px solid #1a6cf5' : '2px solid rgba(255,255,255,0.25)',
+                            background: isAdded ? '#30d158' : isSelected ? '#1a6cf5' : 'transparent',
                             flexShrink: 0,
                             marginTop: '2px',
                             display: 'flex',
@@ -637,7 +653,7 @@ export default function BrainstormPage() {
                             transition: 'all 0.15s',
                           }}
                         >
-                          {isSelected && (
+                          {(isSelected || isAdded) && (
                             <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                               <path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
@@ -658,7 +674,20 @@ export default function BrainstormPage() {
                             }}
                           >
                             {story.title}
-                            {story.storyId && (
+                            {isAdded && (
+                              <span style={{
+                                fontSize: '10px',
+                                fontWeight: 500,
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                                background: 'rgba(48,209,88,0.18)',
+                                color: '#30d158',
+                                letterSpacing: 0,
+                              }}>
+                                已添加
+                              </span>
+                            )}
+                            {!isAdded && story.storyId && (
                               <span style={{
                                 fontSize: '10px',
                                 fontWeight: 500,
