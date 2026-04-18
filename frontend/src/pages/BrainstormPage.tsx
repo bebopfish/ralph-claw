@@ -36,6 +36,7 @@ export default function BrainstormPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isRestoringRef = useRef(false);
+  const isRestoringAddedRef = useRef(false);
   const currentProject = useAppStore((s) => s.currentProject);
   const fetchPrd = useAppStore((s) => s.fetchPrd);
   const prd = useAppStore((s) => s.prd);
@@ -44,6 +45,7 @@ export default function BrainstormPage() {
   // Load messages and addedStories when project changes
   useEffect(() => {
     isRestoringRef.current = true;
+    isRestoringAddedRef.current = true;
     if (!currentProject) { setMessages([]); setAddedStories(new Set()); return; }
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}:${currentProject}`);
@@ -72,6 +74,10 @@ export default function BrainstormPage() {
 
   // Persist addedStories to localStorage whenever it changes
   useEffect(() => {
+    if (isRestoringAddedRef.current) {
+      isRestoringAddedRef.current = false;
+      return;
+    }
     if (!currentProject) return;
     localStorage.setItem(`${STORAGE_KEY_ADDED}:${currentProject}`, JSON.stringify([...addedStories]));
   }, [addedStories, currentProject]);
